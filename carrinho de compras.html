@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 ">
+    <title>Carrinho de compras</title>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/126/126510.png">
+    <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: sans-serif;
+    background-color: #f4f4f4;
+    max-width: 100vw;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .cartRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .cartRow input[type="text"],
+  .cartRow input[type="number"] {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+  }
+
+  #itemList {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 24px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+  }
+
+  #itemList li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+  }
+
+  #itemList li:last-child {
+    border-bottom: none;
+  }
+
+  .removeBtn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .totalBox {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+
+  #clean {
+    display: block;
+    width: 100%;
+    background-color: #ff5722;
+  }
+</style>
+
+    
+</head>
+<body>
+    <h1>Carrinho de compras:</h1>
+    <div class="box">
+      
+        <div class="cartRow">
+            <input type="text" name="itemName" id="itemName" placeholder="Nome do produto">
+            <input type="number" name="itemQtd" id="itemQtd" placeholder="quantidade" step="0.0001">
+            <input type="number" step="0.01" id="preco" placeholder="Preço">
+            <button class="btn" id="add" >+</button>
+            <!-- <button class="btn" id="remove">-</button> -->
+        </div>
+          <ul id="itemList">
+            
+        </ul>
+    </div>
+    <h2>Total:</h2>
+    <p id="total">R$0,00</p>
+
+    <button class="btn" id="clean">Limpar</button>  
+    <button class="btn" id="exportar">Exportar Lista</button> 
+    
+    <script>
+        const addBtn = document.getElementById("add");
+        const itemList = document.getElementById("itemList");
+
+      
+        //evento para ouvir o botao add
+        addBtn.addEventListener('click', ()=>{
+            
+            let nome = document.getElementById("itemName").value.trim();
+            nome = nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
+            const qtd = document.getElementById("itemQtd").value;
+            const valueb = document.getElementById("preco").value;
+            const value = parseFloat(valueb);
+
+            
+            //validação
+            if (!nome || isNaN(qtd)|| isNaN(value)) {
+                alert("Prencha os itens corretamente!");
+                return;
+            }
+            
+
+            //criação do item na tabela
+            const li = document.createElement('li');
+            const total = value * qtd;
+            li.textContent = `${nome}   -  ${qtd} x ${value.toFixed(2)} = R$${total.toFixed(2)}`;
+
+            // botao remover
+            const delBtn = document.createElement('button');
+            delBtn.textContent = "-";
+            delBtn.style.marginLeft = '10px';
+            delBtn.onclick = () => {
+                li.remove();
+                atualizarTotal();
+                salvarLista();
+            } 
+
+                li.appendChild(delBtn);
+                itemList.appendChild(li);
+                atualizarTotal();
+                salvarLista();
+                // limpa campos
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemQtd').value = '';
+                document.getElementById('preco').value = '';
+                document.getElementById("itemName").focus();
+        })
+            function atualizarTotal(){
+                let total = 0;
+
+                itemList.querySelectorAll('li').forEach(li=>{
+                    const texto = li.textContent.trim(); //remove espaços em branco do inicio e final
+                    const partes = texto.split("R$");
+                    if (partes.length === 2) {
+                        const valor = parseFloat(partes[1]);
+                        if (!isNaN(valor)) {
+                            total += valor;
+                        }
+
+                    }
+                })
+                document.getElementById('total').textContent = `R$${total.toFixed(2)}`;
+            }   
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                addBtn.click(); // simula o clique no botão "+"
+             }
+            });
+
+            function salvarLista() {
+                const itens = [];
+                itemList.querySelectorAll('li').forEach(li=>{
+                    const texto = li.firstChild.textContent.trim();
+                    itens.push(texto);
+                });
+                localStorage.setItem('listaCompras', JSON.stringify(itens));
+                localStorage.setItem('totalCompras', document.getElementById('total').textContent);
+            }
+            window.addEventListener('DOMContentLoaded', () => {
+            const itensSalvos = JSON.parse(localStorage.getItem('listaCompras')) || [];
+
+            itensSalvos.forEach(texto => {
+                const li = document.createElement('li');
+                li.textContent = texto;
+
+                const delBtn = document.createElement('button');
+                delBtn.textContent = "-";
+                delBtn.className = "removeBtn";
+                delBtn.style.marginLeft = '10px';
+                delBtn.onclick = () => {
+                li.remove();
+                atualizarTotal();
+                salvarLista();
+                };
+
+                li.appendChild(delBtn);
+                itemList.appendChild(li);
+            });
+
+            const totalSalvo = localStorage.getItem('totalCompras');
+            if (totalSalvo) {
+                document.getElementById('total').textContent = totalSalvo;
+            }
+            });          
+            
+            document.getElementById('clean').addEventListener('click', () => {
+            itemList.innerHTML = '';
+            document.getElementById('total').textContent = 'R$0.00';
+            localStorage.removeItem('listaCompras');
+            localStorage.removeItem('totalCompras');
+            });            
+
+
+            //exportar como texto
+            document.getElementById('exportar').addEventListener('click', () => {
+            let textoExportado = '🛒 Lista de Compras:\n\n';
+
+            itemList.querySelectorAll('li').forEach(li => {
+                const texto = li.firstChild.textContent.trim();
+                textoExportado += `- ${texto}\n`;
+            });
+
+            textoExportado += `\n💰 Total: ${document.getElementById('total').textContent}`;
+
+            // Copia para a área de transferência
+            navigator.clipboard.writeText(textoExportado)
+                .then(() => alert("Lista copiada para a área de transferência!"))
+                .catch(() => alert("Erro ao copiar. Copie manualmente:\n\n" + textoExportado));
+            });            
+    </script>
+</body>
+</html>
